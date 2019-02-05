@@ -22,11 +22,13 @@ class NameInput extends React.Component {
 class Selection extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: "" };
+    this.state = { value: false };
   }
 
   handleChange = event => {
+    console.log(event.target.value);
     this.setState({ value: event.target.value });
+    this.props.handleChange(this.props.id, this.state.value);
   };
   render() {
     return (
@@ -34,7 +36,6 @@ class Selection extends React.Component {
         <input
           id={this.props.id}
           type="checkbox"
-          value={this.state.value}
           onChange={this.handleChange}
         />
         <label htmlFor={this.props.id}>{this.props.label}</label>
@@ -43,7 +44,7 @@ class Selection extends React.Component {
   }
 }
 
-class SelectOptions extends React.Component {
+class ActivityOptions extends React.Component {
   constructor(props) {
     super(props);
     this.state = { value: "" };
@@ -67,21 +68,35 @@ class SelectOptions extends React.Component {
 class EntryList extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { entries: [] };
   }
 
-  handleChange = event => {
-    this.setState({ value: event.target.value });
-  };
   render() {
-    let rows = this.props.entries.map((item, index) => {
-      return <div />;
-    });
+    let header = this.props.header.map((item, index) => <th>{item}</th>);
+    let rows = this.props.entries.map((item, index) => (
+      <tr>
+        <td>
+          <button />
+        </td>
+        <td>{item.name.firstName}</td>
+        <td>{item.name.lastName}</td>
+        <td>{item.activity}</td>
+        <td>
+          {item.restrictions.Dietary
+            ? "a"
+            : "" + item.restrictions.Disability
+            ? "b"
+            : "" + item.restrictions.MedicalNeeds
+            ? "c"
+            : ""}
+        </td>
+      </tr>
+    ));
+
     return (
       <div>
         <table>
-          <thead />
-          <th>{this.props.header}</th>
+          <thead>{header}</thead>
+          <tbody>{rows}</tbody>
         </table>
       </div>
     );
@@ -94,9 +109,10 @@ export default class AssignmentApp extends React.Component {
     this.state = {
       entry: {
         name: { firstName: "", secondName: "" },
-        Activity: "",
-        Restrictions: { Dietary: false, Disability: false, MedicalNeeds: false }
-      }
+        activity: "",
+        restrictions: { Dietary: false, Disability: false, MedicalNeeds: false }
+      },
+      entries: []
     };
   }
 
@@ -117,33 +133,74 @@ export default class AssignmentApp extends React.Component {
       ...entry,
       name: { ...entry.name, lastName: event.target.value }
     };
+    this.setState({ entry: newEntry });
   };
+
+  handleActivity = event => {
+    let entry = this.state.entry;
+    let newEntry = {
+      ...entry,
+      activity: event.target.value
+    };
+    this.setState({ entry: newEntry });
+  };
+
+  handleRestrictions = (id, value) => {
+    let entry = this.state.entry;
+    let newEntry = {
+      ...entry,
+      restrictions: { ...entry.restrictions, id: value }
+    };
+
+    this.setState({ entry: newEntry });
+  };
+
+  submit = () => {
+    let entries = this.state.entries;
+    let newEntries = [...entries];
+    newEntries.push(this.state.entry);
+    this.setState({ entries: newEntries });
+  };
+
   render() {
     return (
       <div>
-        <form onSubmit={this.Submit}>
-          <h3>First Name:</h3>
-          <NameInput handleChange={this.handleFirstNameChange} />
-          <h3>Last Name:</h3>
-          <NameInput handleChange={this.handleLastNameChange} />
-          <h3>Select Activity</h3>
-          <SelectOptions options={["Science Lab", "Cooking"]} />
-          <h3>Check All that applies</h3>
-          <Selection label="Dietary Restrictions" />
-          <Selection label="Physical Diability" />
-          <Selection label="Medical Needs" />
-          <button onClick={this.Submit}>Submit</button>
-          <EntryList
-            entries={[]}
-            header={[
-              "Remove",
-              "First Name",
-              "Last Name",
-              "Activity",
-              "Restrictions"
-            ]}
-          />
-        </form>
+        <h3>First Name:</h3>
+        <NameInput handleChange={this.handleFirstNameChange} />
+        <h3>Last Name:</h3>
+        <NameInput handleChange={this.handleLastNameChange} />
+        <h3>Select Activity</h3>
+        <ActivityOptions
+          options={["Science Lab", "Cooking"]}
+          handleChange={this.handleActivity}
+        />
+        <h3>Check All that applies</h3>
+        <Selection
+          label="a) Dietary Restrictions"
+          id="Dietary"
+          handleChange={this.handleRestrictions}
+        />
+        <Selection
+          label="b) Physical Diability"
+          id="Disability"
+          handleChange={this.handleRestrictions}
+        />
+        <Selection
+          label="c) Medical Needs"
+          id="MedicalNeeds"
+          handleChange={this.handleRestrictions}
+        />
+        <button onClick={this.submit}>Submit</button>
+        <EntryList
+          entries={this.state.entries}
+          header={[
+            "Remove",
+            "First Name",
+            "Last Name",
+            "Activity",
+            "Restrictions"
+          ]}
+        />
       </div>
     );
   }
